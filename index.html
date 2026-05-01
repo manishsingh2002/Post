@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX — Instagram Post Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,600;1,400&family=Syne:wght@700;800&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{--gold:#c9a84c;--gold-l:#e8c97a;--gold-d:#a07830;--tr:0.22s cubic-bezier(.4,0,.2,1)}
+[data-theme=dark]{--bg:#0a0a0a;--surface:#141414;--surface2:#1c1c1c;--surface3:#222;--border:rgba(201,168,76,0.18);--border2:rgba(255,255,255,0.07);--text:#f0ebe0;--text2:#9a9080;--shadow:0 28px 70px rgba(0,0,0,0.7)}
+[data-theme=light]{--bg:#f0ebe0;--surface:#faf7f0;--surface2:#e8e2d4;--surface3:#ddd7c8;--border:rgba(160,120,48,0.22);--border2:rgba(0,0,0,0.09);--text:#1a1510;--text2:#7a6e5e;--shadow:0 28px 70px rgba(100,80,40,0.2)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;transition:background var(--tr),color var(--tr);overflow-x:hidden}
+
+/* HEADER */
+.app-header{position:sticky;top:0;z-index:300;background:var(--bg);border-bottom:1px solid var(--border);padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;transition:background var(--tr)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.3em;color:var(--gold);line-height:1}
+.logo-sub{font-size:.5rem;letter-spacing:.2em;color:var(--text2);display:block;margin-top:-2px}
+.h-actions{display:flex;align-items:center;gap:.6rem}
+.btn{font-family:'IBM Plex Mono',monospace;letter-spacing:.14em;cursor:pointer;text-transform:uppercase;transition:all var(--tr);display:inline-flex;align-items:center;gap:5px;border:none;white-space:nowrap;font-size:.56rem}
+.btn-ghost{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);padding:6px 12px}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-gold{background:var(--gold);color:#0a0a0a;padding:7px 16px;font-weight:600}
+.btn-gold:hover{background:var(--gold-l);transform:translateY(-1px)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2);padding:6px 12px}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-danger{background:transparent;border:1px solid rgba(184,50,50,.35);color:#c04040;padding:5px 8px;width:100%;justify-content:center;font-size:.52rem}
+.btn-danger:hover{border-color:#c04040;background:rgba(184,50,50,.08)}
+
+/* LAYOUT */
+.app-body{display:grid;grid-template-columns:320px 1fr;height:calc(100vh - 56px);overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{border-right:1px solid var(--border);overflow-y:auto;background:var(--surface);transition:background var(--tr)}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.s-sec{border-bottom:1px solid var(--border2);padding:.9rem 1.2rem}
+.s-title{font-size:.52rem;letter-spacing:.28em;color:var(--gold);text-transform:uppercase;margin-bottom:.8rem;display:flex;align-items:center;gap:8px}
+.s-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* TABS */
+.tab-row{display:flex;border-bottom:1px solid var(--border2);margin-bottom:.9rem}
+.tab{flex:1;padding:7px 2px;font-family:'IBM Plex Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:all var(--tr)}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* GRIDS */
+.tpl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
+.tpl-btn{background:var(--surface2);border:1px solid var(--border2);padding:8px 6px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:.5rem;letter-spacing:.07em;color:var(--text2);text-align:center;transition:all var(--tr);line-height:1.4}
+.tpl-btn:hover,.tpl-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.06)}
+
+/* FORMS */
+.fg{margin-bottom:.8rem}
+.fg:last-child{margin-bottom:0}
+label{display:block;font-size:.48rem;letter-spacing:.2em;color:var(--text2);text-transform:uppercase;margin-bottom:4px}
+input[type=text],textarea,select{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:.6rem;padding:7px 9px;outline:none;transition:border-color var(--tr);resize:vertical;appearance:none;line-height:1.5}
+input[type=text]:focus,textarea:focus,select:focus{border-color:var(--gold)}
+textarea{min-height:60px}
+select option{background:var(--surface);color:var(--text)}
+input[type=file]{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-family:'IBM Plex Mono',monospace;font-size:.56rem;padding:7px 9px;cursor:pointer}
+input[type=file]::-webkit-file-upload-button{background:var(--gold);border:none;color:#0a0a0a;padding:4px 9px;font-family:'IBM Plex Mono',monospace;font-size:.5rem;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;margin-right:7px}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--border2);outline:none;cursor:pointer;margin-top:6px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--gold);border-radius:50%;cursor:pointer}
+
+/* SWATCHES */
+.swatch-row{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:.5rem}
+.swatch{height:24px;border:2px solid transparent;cursor:pointer;transition:all var(--tr);position:relative}
+.swatch.active::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+.swatch:hover{transform:scale(1.1)}
+.swatch.active{border-color:var(--gold)}
+
+/* SLIDE NAV */
+.slide-nav{display:flex;align-items:center;gap:7px;justify-content:space-between;margin-bottom:.7rem}
+.snav-btn{width:27px;height:27px;background:var(--surface2);border:1px solid var(--border2);color:var(--text2);cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center;transition:all var(--tr)}
+.snav-btn:hover{border-color:var(--gold);color:var(--gold)}
+.snav-count{font-size:.57rem;color:var(--text2);letter-spacing:.1em}
+.act-row{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px}
+.act-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:5px}
+.slide-type-row{display:flex;gap:5px;margin-bottom:7px}
+.slide-type-row select{flex:1}
+
+/* DOWNLOAD */
+.dl-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.btn-dl{background:var(--gold);border:none;color:#0a0a0a;font-family:'IBM Plex Mono',monospace;font-size:.54rem;letter-spacing:.13em;padding:8px 5px;cursor:pointer;text-transform:uppercase;font-weight:700;transition:all var(--tr);text-align:center;display:block}
+.btn-dl:hover{background:var(--gold-l)}
+.btn-dl.full{grid-column:span 2;background:transparent;border:1px solid var(--gold);color:var(--gold)}
+.btn-dl.full:hover{background:rgba(201,168,76,.08)}
+
+/* PRESETS */
+.preset-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
+.preset-btn{background:var(--surface2);border:1px solid var(--border2);padding:8px 7px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:.48rem;letter-spacing:.05em;color:var(--text2);text-align:left;transition:all var(--tr);line-height:1.5}
+.preset-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.04)}
+.preset-num{color:var(--gold);font-size:.46rem;display:block;letter-spacing:.15em}
+
+/* ASPECT RATIO */
+.ar-row{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.ar-btn{background:var(--surface2);border:1px solid var(--border2);padding:7px 3px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:.48rem;letter-spacing:.07em;color:var(--text2);text-align:center;transition:all var(--tr);display:flex;flex-direction:column;align-items:center;gap:3px}
+.ar-btn:hover,.ar-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.06)}
+.ar-icon{font-size:.9rem;opacity:.65}
+
+/* BG STYLE */
+.bg-row{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.bg-btn{height:34px;border:2px solid var(--border2);cursor:pointer;transition:all var(--tr);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--text2);letter-spacing:.06em}
+.bg-btn.active{border-color:var(--gold)}
+.bg-btn:hover{border-color:rgba(201,168,76,.5)}
+
+/* SHORTCUT TABLE */
+.sc-table{width:100%;border-collapse:collapse}
+.sc-table td{padding:4px 0;font-size:.52rem;color:var(--text2);letter-spacing:.04em;line-height:1.5;border-bottom:1px solid var(--border2)}
+.sc-table td:first-child{color:var(--gold);font-size:.48rem;white-space:nowrap;padding-right:8px;min-width:80px}
+.sc-table tr:last-child td{border-bottom:none}
+
+/* COPY CAPTION BTN */
+.copy-cap-btn{display:flex;align-items:center;gap:5px;margin-top:8px;background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-family:'IBM Plex Mono',monospace;font-size:.48rem;letter-spacing:.12em;padding:5px 9px;cursor:pointer;text-transform:uppercase;transition:all var(--tr);width:100%;justify-content:center}
+.copy-cap-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+/* PREVIEW AREA */
+.preview-area{display:flex;flex-direction:column;background:var(--bg);overflow:hidden;transition:background var(--tr)}
+.preview-toolbar{height:42px;border-bottom:1px solid var(--border2);display:flex;align-items:center;padding:0 1.25rem;gap:.8rem;flex-shrink:0}
+.preview-label{font-size:.5rem;letter-spacing:.17em;color:var(--text2);text-transform:uppercase}
+.slide-dots{display:flex;gap:5px;margin-left:auto}
+.dot{width:7px;height:7px;border:1px solid var(--border);border-radius:50%;cursor:pointer;transition:all var(--tr);background:transparent}
+.dot.active{background:var(--gold);border-color:var(--gold)}
+.preview-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:1.5rem;overflow:auto;background:radial-gradient(ellipse at center,rgba(201,168,76,.025) 0%,transparent 70%)}
+
+/* IG POST */
+.ig-post{position:relative;overflow:hidden;box-shadow:var(--shadow);transition:transform .3s;display:flex;flex-direction:column;cursor:default;flex-shrink:0}
+.ig-post:hover{transform:scale(1.007)}
+.ig-post.ar-square{width:480px;height:480px}
+.ig-post.ar-portrait{width:384px;height:480px}
+.ig-post.ar-story{width:270px;height:480px}
+
+/* TEMPLATES */
+.ig-post[data-template=dark-gold]{background:#0a0a0a;color:#f0ebe0}
+.ig-post[data-template=light-warm]{background:#faf5ec;color:#1a1510}
+.ig-post[data-template=obsidian]{background:#0d0d14;color:#e8e4f0}
+.ig-post[data-template=ivory]{background:#f5f0e4;color:#1c1814}
+.ig-post[data-template=slate]{background:#1a1f2e;color:#dce4f0}
+.ig-post[data-template=midnight]{background:#060810;color:#d8e4ff}
+.ig-post[data-template=sand]{background:#e8dfc8;color:#1a1510}
+
+/* GLOBAL POST STYLES */
+.bg-overlay{position:absolute;inset:0;pointer-events:none;z-index:0}
+.ig-post>*:not(.bg-overlay){position:relative;z-index:1}
+.accent{color:var(--gold)}
+.rule-line{background:var(--gold)}
+.fw-title,.list-eyebrow,.cap-eyebrow,.media-eyebrow,.stats-eyebrow,.div-label-text{color:var(--gold)}
+.step-num,.list-num,.stat-num{color:var(--gold)}
+.closing-brand,.quote-author,.cap-tag{color:var(--gold)}
+.col-elite{border-left:2px solid var(--gold)!important;background:rgba(128,128,128,.07)!important}
+.col-avg{background:rgba(128,128,128,.03)!important}
+
+/* FONT PAIRS */
+.font-classic .hook-line,.font-classic .cmp-title,.font-classic .fw-heading,.font-classic .list-header,.font-classic .closing-main,.font-classic .media-title,.font-classic .stats-headline,.font-classic .div-title,.font-classic .quote-text{font-family:'DM Serif Display',serif}
+.font-editorial .hook-line,.font-editorial .cmp-title,.font-editorial .fw-heading,.font-editorial .list-header,.font-editorial .closing-main,.font-editorial .media-title,.font-editorial .stats-headline,.font-editorial .div-title,.font-editorial .quote-text{font-family:'Cormorant Garamond',serif;font-style:italic}
+.font-modern .hook-line,.font-modern .cmp-title,.font-modern .fw-heading,.font-modern .list-header,.font-modern .closing-main,.font-modern .media-title,.font-modern .stats-headline,.font-modern .div-title,.font-modern .quote-text{font-family:'Syne',sans-serif;font-weight:800;letter-spacing:-.02em}
+.font-clean .hook-line,.font-clean .cmp-title,.font-clean .fw-heading,.font-clean .list-header,.font-clean .closing-main,.font-clean .media-title,.font-clean .stats-headline,.font-clean .div-title,.font-clean .quote-text{font-family:'Space Grotesk',sans-serif;font-weight:600}
+
+/* ── SLIDE LAYOUTS ── */
+.slide-hook{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:30px 34px}
+.hook-top{display:flex;justify-content:space-between;align-items:center}
+.category-badge{font-size:8px;letter-spacing:.22em;text-transform:uppercase;border:1px solid currentColor;padding:3px 8px;opacity:.55;font-family:'IBM Plex Mono',monospace}
+.post-num{font-size:8px;letter-spacing:.15em;opacity:.28;font-family:'IBM Plex Mono',monospace}
+.hook-mid{flex:1;display:flex;flex-direction:column;justify-content:center}
+.hook-line{line-height:1.18;letter-spacing:-.01em;margin-bottom:16px;transition:font-size .2s}
+.hook-rule{width:36px;height:2px;margin-bottom:14px}
+.hook-sub{font-size:10px;line-height:1.8;letter-spacing:.03em;opacity:.56;max-width:88%;font-family:'IBM Plex Mono',monospace}
+.hook-bot{display:flex;justify-content:space-between;align-items:flex-end}
+.hook-brand{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:.38em;opacity:.32}
+.hook-ind{font-size:8px;letter-spacing:.14em;opacity:.26;font-family:'IBM Plex Mono',monospace}
+
+.slide-compare{width:100%;height:100%;display:flex;flex-direction:column;padding:26px 30px 22px}
+.cmp-header{margin-bottom:18px}
+.cmp-label{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:3px}
+.cmp-title{font-size:16px;line-height:1.3}
+.cmp-cols{display:grid;grid-template-columns:1fr 1fr;gap:2px;flex:1}
+.col-avg,.col-elite{padding:14px 12px;display:flex;flex-direction:column;gap:8px}
+.col-label{font-family:'IBM Plex Mono',monospace;font-size:7.5px;letter-spacing:.25em;text-transform:uppercase;opacity:.5}
+.col-text{font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.75;opacity:.78}
+.cmp-bottom{margin-top:14px;padding-top:12px;border-top:1px solid rgba(128,128,128,.14);font-style:italic;font-size:11.5px;opacity:.48;line-height:1.5;font-family:'DM Serif Display',serif}
+
+.slide-framework{width:100%;height:100%;display:flex;flex-direction:column;padding:26px 30px}
+.fw-title{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.28em;text-transform:uppercase;margin-bottom:12px}
+.fw-heading{font-size:18px;line-height:1.3;margin-bottom:18px}
+.fw-steps{flex:1;display:flex;flex-direction:column;gap:11px}
+.fw-step{display:flex;gap:12px;align-items:flex-start}
+.step-num{font-family:'Bebas Neue',sans-serif;font-size:22px;line-height:1;opacity:.7;min-width:24px}
+.step-text{font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.7;opacity:.72;padding-top:2px}
+.fw-closing{margin-top:14px;padding-top:12px;border-top:1px solid rgba(128,128,128,.11);font-style:italic;font-size:11.5px;opacity:.45;font-family:'DM Serif Display',serif}
+
+.slide-list{padding:30px 34px;display:flex;flex-direction:column;height:100%}
+.list-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.28em;text-transform:uppercase;margin-bottom:10px}
+.list-header{font-size:20px;margin-bottom:18px;line-height:1.2}
+.list-items{flex:1;display:flex;flex-direction:column;justify-content:center;gap:0}
+.list-item{display:flex;gap:12px;align-items:center;border-bottom:1px solid rgba(128,128,128,.17);padding:9px 0}
+.list-item:last-child{border-bottom:none}
+.list-num{font-family:'Bebas Neue',sans-serif;font-size:18px;opacity:.7;min-width:20px}
+.list-text{font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.5;opacity:.8}
+
+.slide-stats{width:100%;height:100%;display:flex;flex-direction:column;padding:28px 32px}
+.stats-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.28em;text-transform:uppercase;margin-bottom:8px}
+.stats-headline{font-size:18px;line-height:1.25;margin-bottom:20px}
+.stats-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.stat-block{padding:14px 12px;background:rgba(128,128,128,.04);display:flex;flex-direction:column;justify-content:flex-end;gap:4px}
+.stat-num{font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;letter-spacing:-.01em}
+.stat-label{font-family:'IBM Plex Mono',monospace;font-size:9px;line-height:1.5;opacity:.58;letter-spacing:.04em}
+.stats-note{margin-top:12px;padding-top:10px;border-top:1px solid rgba(128,128,128,.11);font-family:'IBM Plex Mono',monospace;font-size:9px;opacity:.42;line-height:1.6}
+
+.slide-quote{padding:34px 38px;display:flex;flex-direction:column;justify-content:center;height:100%;text-align:center}
+.quote-mark{font-size:52px;line-height:.9;margin-bottom:7px;opacity:.9;font-family:'DM Serif Display',serif}
+.quote-text{font-size:20px;line-height:1.45;margin-bottom:20px}
+.quote-author{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.22em;text-transform:uppercase;opacity:.82}
+
+.slide-closing{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:34px}
+.cl-rule{width:1px;height:50px;margin-bottom:24px;background:currentColor;opacity:.16}
+.closing-main{font-size:21px;line-height:1.35;letter-spacing:-.01em;margin-bottom:24px}
+.cl-rule2{width:1px;height:32px;margin-bottom:18px;background:currentColor;opacity:.16}
+.closing-brand{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.42em;opacity:.72}
+.closing-handle{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.2em;opacity:.35;margin-top:4px}
+
+.slide-caption{width:100%;height:100%;display:flex;flex-direction:column;padding:30px 34px}
+.cap-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.28em;text-transform:uppercase;margin-bottom:16px}
+.cap-text{font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.85;opacity:.72;flex:1}
+.cap-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:14px}
+.cap-tag{font-family:'IBM Plex Mono',monospace;font-size:8px;opacity:.75;letter-spacing:.04em;border:1px solid currentColor;padding:2px 6px}
+
+.slide-media{width:100%;height:100%;display:flex;flex-direction:column}
+.media-top{height:50%;width:100%;background:rgba(128,128,128,.06);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.media-top img{width:100%;height:100%;object-fit:cover}
+.media-placeholder{font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.2em;opacity:.38;border-bottom:1px solid currentColor;padding-bottom:3px}
+.media-bottom{height:50%;padding:24px 32px;display:flex;flex-direction:column;justify-content:center}
+.media-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.28em;text-transform:uppercase;margin-bottom:9px}
+.media-title{font-size:20px;line-height:1.2;margin-bottom:9px}
+.media-desc{font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.6;opacity:.72}
+
+.slide-divider{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:36px}
+.div-rule-v{width:1px;height:60px;background:currentColor;opacity:.14;margin-bottom:20px}
+.div-num-label{font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:.42em;opacity:.45;margin-bottom:10px}
+.div-label-text{font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.3em;text-transform:uppercase;margin-bottom:16px}
+.div-title{font-size:24px;line-height:1.3;margin-bottom:20px}
+.div-rule-v2{width:1px;height:36px;background:currentColor;opacity:.14}
+
+/* POST STRIP */
+.post-strip{height:74px;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px;padding:0 1.2rem;overflow-x:auto;flex-shrink:0;background:var(--surface)}
+.post-strip::-webkit-scrollbar{height:3px}
+.post-strip::-webkit-scrollbar-thumb{background:var(--border)}
+.strip-thumb{flex-shrink:0;width:48px;height:48px;border:1.5px solid var(--border2);cursor:pointer;overflow:hidden;position:relative;transition:border-color var(--tr),transform var(--tr);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:6px;letter-spacing:.08em;color:var(--text2);text-align:center;line-height:1.4}
+.strip-thumb:hover{border-color:var(--gold);transform:scale(1.07)}
+.strip-thumb.active{border-color:var(--gold);border-width:2px}
+.strip-bg{position:absolute;inset:0;opacity:.12}
+.strip-label{position:relative;z-index:1;padding:3px}
+.strip-badge{position:absolute;top:2px;right:2px;background:var(--gold);color:#0a0a0a;font-size:5px;font-family:'IBM Plex Mono',monospace;padding:1px 3px;font-weight:700}
+
+/* OVERLAY + TOAST */
+.loading-overlay{position:fixed;inset:0;background:rgba(8,8,8,.88);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
+.loading-overlay.active{display:flex}
+.spinner{width:36px;height:36px;border:2px solid rgba(201,168,76,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.25em;color:var(--gold);text-transform:uppercase}
+.toast{position:fixed;bottom:18px;right:18px;background:var(--gold);color:#0a0a0a;font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.13em;padding:10px 16px;z-index:9999;transform:translateY(60px);opacity:0;transition:all .3s;pointer-events:none;font-weight:700}
+.toast.show{transform:translateY(0);opacity:1}
+
+@keyframes undoFlash{0%{opacity:1}50%{opacity:.3}100%{opacity:1}}
+.undo-flash{animation:undoFlash .3s ease}
+
+@media(max-width:860px){
+  .app-body{grid-template-columns:1fr;grid-template-rows:auto 1fr;height:auto;overflow:visible}
+  .sidebar{height:auto;overflow-y:visible;border-right:none;border-bottom:1px solid var(--border)}
+  .preview-area{height:560px}
+  .ig-post.ar-square{width:360px!important;height:360px!important}
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div><div class="logo">APEX<span class="logo-sub">Instagram Post Generator</span></div></div>
+  <div class="h-actions">
+    <button class="btn btn-ghost" onclick="toggleAppTheme()"><span id="theme-icon">☀</span> <span id="theme-label">Light</span></button>
+    <button class="btn btn-ghost" onclick="undo()">↩ Undo</button>
+    <button class="btn btn-gold" onclick="downloadCurrentSlide()">↓ Download</button>
+  </div>
+</header>
+
+<div class="loading-overlay" id="loading"><div class="spinner"></div><div class="loading-text">Rendering PNG...</div></div>
+<div class="toast" id="toast"></div>
+
+<div class="app-body">
+<aside class="sidebar">
+
+  <div class="s-sec" style="padding-bottom:0">
+    <div class="tab-row">
+      <button class="tab active" onclick="switchTab('content',this)">Content</button>
+      <button class="tab" onclick="switchTab('style',this)">Style</button>
+      <button class="tab" onclick="switchTab('presets',this)">Presets</button>
+      <button class="tab" onclick="switchTab('export',this)">Export</button>
+    </div>
+  </div>
+
+  <!-- CONTENT TAB -->
+  <div id="tab-content">
+    <div class="s-sec">
+      <div class="s-title">Slide Manager</div>
+      <div class="slide-nav">
+        <button class="snav-btn" onclick="prevSlide()">←</button>
+        <span class="snav-count" id="slide-counter">1 / 1</span>
+        <button class="snav-btn" onclick="nextSlide()">→</button>
+      </div>
+      <div class="act-row">
+        <button class="btn btn-ghost" style="justify-content:center;font-size:.5rem;padding:5px" onclick="moveSlideLeft()">← Move</button>
+        <button class="btn btn-ghost" style="justify-content:center;font-size:.5rem;padding:5px" onclick="moveSlideRight()">Move →</button>
+      </div>
+      <div class="act-row-3">
+        <button class="btn btn-ghost" style="justify-content:center;font-size:.48rem;padding:5px" onclick="duplicateSlide()">⎘ Dupe</button>
+        <button class="btn btn-ghost" style="justify-content:center;font-size:.48rem;padding:5px" onclick="resetSlide()">↺ Reset</button>
+        <button class="btn btn-danger" onclick="deleteSlide()">✕ Del</button>
+      </div>
+      <div class="slide-type-row">
+        <select id="new-slide-type">
+          <option value="hook">Hook Card</option>
+          <option value="compare">Avg vs Elite</option>
+          <option value="framework">Framework</option>
+          <option value="list">List Card</option>
+          <option value="stats">Stats / Data</option>
+          <option value="quote">Quote Card</option>
+          <option value="media">Image + Text</option>
+          <option value="divider">Divider Card</option>
+          <option value="closing">Closing Card</option>
+          <option value="caption">Caption Card</option>
+        </select>
+        <button class="btn btn-gold" style="padding:0 11px;flex-shrink:0" onclick="addSlide()">+ Add</button>
+      </div>
+    </div>
+    <div class="s-sec" id="dynamic-editor"></div>
+  </div>
+
+  <!-- STYLE TAB -->
+  <div id="tab-style" style="display:none">
+    <div class="s-sec">
+      <div class="s-title">Template</div>
+      <div class="tpl-grid">
+        <button class="tpl-btn active" onclick="setTemplate('dark-gold',this)">Dark Gold</button>
+        <button class="tpl-btn" onclick="setTemplate('light-warm',this)">Light Warm</button>
+        <button class="tpl-btn" onclick="setTemplate('obsidian',this)">Obsidian</button>
+        <button class="tpl-btn" onclick="setTemplate('ivory',this)">Ivory</button>
+        <button class="tpl-btn" onclick="setTemplate('slate',this)">Slate</button>
+        <button class="tpl-btn" onclick="setTemplate('midnight',this)">Midnight</button>
+        <button class="tpl-btn" onclick="setTemplate('sand',this)">Sand</button>
+      </div>
+    </div>
+    <div class="s-sec">
+      <div class="s-title">Background Style</div>
+      <div class="bg-row">
+        <div class="bg-btn active" onclick="setBgStyle('solid',this)">Solid</div>
+        <div class="bg-btn" onclick="setBgStyle('gradient',this)" style="background:linear-gradient(135deg,#111 0%,#1a1408 100%)">Grad</div>
+        <div class="bg-btn" onclick="setBgStyle('noise',this)">Noise</div>
+        <div class="bg-btn" onclick="setBgStyle('geo',this)">Geo</div>
+      </div>
+    </div>
+    <div class="s-sec">
+      <div class="s-title">Accent Color</div>
+      <div class="swatch-row">
+        <div class="swatch active" style="background:#c9a84c" data-color="#c9a84c" onclick="setAccent(this)"></div>
+        <div class="swatch" style="background:#e8c97a" data-color="#e8c97a" onclick="setAccent(this)"></div>
+        <div class="swatch" style="background:#b03030" data-color="#b03030" onclick="setAccent(this)"></div>
+        <div class="swatch" style="background:#50a0dc" data-color="#50a0dc" onclick="setAccent(this)"></div>
+        <div class="swatch" style="background:#a078dc" data-color="#a078dc" onclick="setAccent(this)"></div>
+        <div class="swatch" style="background:#48b878" data-color="#48b878" onclick="setAccent(this)"></div>
+        <div class="swatch" style="background:#e07840" data-color="#e07840" onclick="setAccent(this)"></div>
+        <div class="swatch" style="background:#d84080" data-color="#d84080" onclick="setAccent(this)"></div>
+        <div class="swatch" style="background:#a0b8d0" data-color="#a0b8d0" onclick="setAccent(this)"></div>
+        <div class="swatch" style="background:#c8f020" data-color="#c8f020" onclick="setAccent(this)"></div>
+        <div class="swatch" style="background:#f0e8d0" data-color="#f0e8d0" onclick="setAccent(this)"></div>
+        <div class="swatch" style="background:#fff;border:1px solid rgba(128,128,128,.3)" data-color="#ffffff" onclick="setAccent(this)"></div>
+      </div>
+    </div>
+    <div class="s-sec">
+      <div class="s-title">Font Pairing</div>
+      <div class="tpl-grid">
+        <button class="tpl-btn active" id="fp-classic" onclick="setFontPair('classic',this)">Classic Serif</button>
+        <button class="tpl-btn" id="fp-editorial" onclick="setFontPair('editorial',this)">Editorial Italic</button>
+        <button class="tpl-btn" id="fp-modern" onclick="setFontPair('modern',this)">Modern Bold</button>
+        <button class="tpl-btn" id="fp-clean" onclick="setFontPair('clean',this)">Clean Sans</button>
+      </div>
+    </div>
+    <div class="s-sec">
+      <div class="s-title">Aspect Ratio</div>
+      <div class="ar-row">
+        <button class="ar-btn active" id="ar-square" onclick="setAR('square',this)"><span class="ar-icon">◼</span><span>1:1 Square</span></button>
+        <button class="ar-btn" id="ar-portrait" onclick="setAR('portrait',this)"><span class="ar-icon">▬</span><span>4:5 Portrait</span></button>
+        <button class="ar-btn" id="ar-story" onclick="setAR('story',this)"><span class="ar-icon">▮</span><span>9:16 Story</span></button>
+      </div>
+    </div>
+    <div class="s-sec">
+      <div class="s-title">Hook Font Size</div>
+      <div class="fg">
+        <label>Size: <span id="hook-size-val">32</span>px</label>
+        <input type="range" id="rng-hooksize" min="18" max="46" value="32" oninput="updateStyle()">
+      </div>
+    </div>
+  </div>
+
+  <!-- PRESETS TAB -->
+  <div id="tab-presets" style="display:none">
+    <div class="s-sec">
+      <div class="s-title">APEX Post Bank (Posts 1–10)</div>
+      <div class="preset-grid" id="preset-grid"></div>
+    </div>
+    <div class="s-sec">
+      <div class="s-title" style="margin-bottom:.5rem">How to Add Posts 11–40</div>
+      <p style="font-size:.5rem;color:var(--text2);line-height:1.8;letter-spacing:.04em">Ask Claude: <span style="color:var(--gold)">"Load post [number] into my generator"</span> and the full slide data will be generated for copy-paste into this tool.</p>
+    </div>
+  </div>
+
+  <!-- EXPORT TAB -->
+  <div id="tab-export" style="display:none">
+    <div class="s-sec">
+      <div class="s-title">Download</div>
+      <div class="dl-grid">
+        <button class="btn-dl" onclick="downloadCurrentSlide()">↓ This Slide</button>
+        <button class="btn-dl full" onclick="downloadAllSlides()">↓ All Slides</button>
+      </div>
+      <p style="font-size:.48rem;color:var(--text2);margin-top:.7rem;letter-spacing:.06em;line-height:1.85">Exports at <strong style="color:var(--gold)">1080 × 1080px</strong> for square, proportional for other ratios. PNG, Instagram-ready.</p>
+    </div>
+    <div class="s-sec">
+      <div class="s-title">Keyboard Shortcuts</div>
+      <table class="sc-table">
+        <tr><td>← / →</td><td>Navigate slides</td></tr>
+        <tr><td>Ctrl + Z</td><td>Undo last change</td></tr>
+        <tr><td>Ctrl + D</td><td>Duplicate slide</td></tr>
+        <tr><td>Ctrl + S</td><td>Download current slide</td></tr>
+        <tr><td>Ctrl + N</td><td>Add new slide</td></tr>
+        <tr><td>1 – 7</td><td>Switch template quickly</td></tr>
+      </table>
+    </div>
+  </div>
+
+</aside>
+
+<!-- PREVIEW -->
+<div class="preview-area">
+  <div class="preview-toolbar">
+    <span class="preview-label" id="preview-label">Live Preview · 480 × 480 → exports 1080px</span>
+    <div class="slide-dots" id="slide-dots"></div>
+  </div>
+  <div class="preview-wrap">
+    <div class="ig-post ar-square font-classic" id="ig-post" data-template="dark-gold"></div>
+  </div>
+  <div class="post-strip" id="post-strip"></div>
+</div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+let currentSlideIndex = 0;
+let currentTemplate = 'dark-gold';
+let currentAccent = '#c9a84c';
+let currentBgStyle = 'solid';
+let currentFontPair = 'classic';
+let currentAR = 'square';
+let hookFontSize = 32;
+let undoStack = [];
+let appTheme = 'dark';
+
+const TPL_ACCENTS = {'dark-gold':'#c9a84c','light-warm':'#a07830','obsidian':'#a078dc','ivory':'#b03030','slate':'#50a0dc','midnight':'#7090e0','sand':'#a07030'};
+const TPL_BG = {'dark-gold':'#0a0a0a','light-warm':'#faf5ec','obsidian':'#0d0d14','ivory':'#f5f0e4','slate':'#1a1f2e','midnight':'#060810','sand':'#e8dfc8'};
+
+// ════════════════════════════════════════════
+//  DEFAULTS
+// ════════════════════════════════════════════
+const DEFAULTS = {
+  hook:{label:'Hook',category:'Wealth Psychology',postnum:'01 / 05',hook:'The richest person in the room is almost never the loudest.',accent:'never the loudest',sub:'Visible wealth is a signal. Invisible wealth is a strategy.',brand:'APEX'},
+  compare:{label:'Compare',category:'Avg vs Elite Thinking',avg:'What the average person does...',elite:'What the elite person does...',bottom:'A powerful summarizing insight.'},
+  framework:{label:'Framework',category:'Framework Title',steps:'Step one.\nStep two.\nStep three.',closing:'"A closing insight."'},
+  list:{label:'List',eyebrow:'Key Points',title:'5 Principles',items:'First item\nSecond item\nThird item\nFourth item\nFifth item'},
+  stats:{label:'Stats',eyebrow:'By The Numbers',headline:'The Numbers Tell the Story',stat1num:'80%',stat1label:'of decisions made emotionally',stat2num:'3×',stat2label:'more return with exit planning',stat3num:'5 min',stat3label:'daily reflection time',stat4num:'0',stat4label:'public announcements before execution',note:'Source: behavioral economics research'},
+  quote:{label:'Quote',quote:'Quality is remembered long after the price is forgotten.',author:'Aldo Gucci'},
+  media:{label:'Media',eyebrow:'Featured',title:'Insight of the Day',text:'Every system produces exactly the results it was designed for.',imageSrc:''},
+  divider:{label:'Divider',num:'02',label2:'Next Insight',title:'The Architecture of Wealth'},
+  closing:{label:'Closing',closing:'"Build a position that defends itself while you sleep."',brand:'APEX',handle:'@apexmindset'},
+  caption:{label:'Caption',caption:'The wealthy don\'t go quiet because they\'re humble. They go quiet because noise is a cost they stopped paying.',tags:'#WealthPsychology #PowerMoves #EliteThinking #SilentWealth'}
+};
+
+// ════════════════════════════════════════════
+//  PRESETS
+// ════════════════════════════════════════════
+const PRESETS = [
+  {num:'01',title:'Silent Wealth',category:'Silent Moves',slides:[
+    {type:'hook',label:'Hook',category:'Silent Moves',postnum:'01 / 10',hook:'The richest person in the room is almost never the loudest.',accent:'never the loudest',sub:'Visible wealth is a signal. Invisible wealth is a strategy.',brand:'APEX'},
+    {type:'compare',label:'Compare',category:'Wealth Signaling',avg:'Buys luxury goods to signal status. Validation loop through external display.',elite:'Wealth is privacy. The real flex is nobody knowing your net worth. Leverage beats logos.',bottom:'The signal IS the weakness.'},
+    {type:'framework',label:'Framework',category:'Silent Wealth Protocol',steps:'Reduce visible signals — stop broadcasting income or wins.\nLet results speak through behavior, not content.\nRedirect attention into private network-building.',closing:'"Silence is the signature of those who no longer need approval."'},
+    {type:'closing',label:'Closing',closing:'"Silence is the signature of those who no longer need approval."',brand:'APEX',handle:'@apexmindset'},
+    {type:'caption',label:'Caption',caption:'The wealthy don\'t go quiet because they\'re humble. They go quiet because noise is a cost they stopped paying. Once you understand that attention is leverage — you spend it differently.',tags:'#WealthPsychology #PowerMoves #EliteThinking #SilentWealth'}
+  ]},
+  {num:'02',title:'Buy Time / Systems',category:'Money Behavior',slides:[
+    {type:'hook',label:'Hook',category:'Money Behavior',postnum:'02 / 10',hook:'Middle class buy things. Rich buy time. Billionaires buy systems.',accent:'buy systems',sub:'Three stages. Most people never leave stage one.',brand:'APEX'},
+    {type:'compare',label:'Compare',category:'The 3 Stages',avg:'$5K bonus → new phone, trip. Value = experience of spending.',elite:'$5K → eliminate a recurring task forever. Value = time freed permanently.',bottom:'What does this free me from?'},
+    {type:'framework',label:'Framework',category:'3 Stages of Wealth',steps:'Stage 1: Buy things → experience of ownership. Diminishing returns.\nStage 2: Buy time → delegate, automate, outsource.\nStage 3: Buy systems → assets, IP, teams. Money flows without input.',closing:'"Your relationship with money reveals your relationship with time."'},
+    {type:'closing',label:'Closing',closing:'"Your relationship with money reveals your relationship with time."',brand:'APEX',handle:'@apexmindset'},
+    {type:'caption',label:'Caption',caption:'The question isn\'t "what can I afford?" It\'s "what does this free me from?" Most people never think past the purchase. That\'s the wall separating income from wealth.',tags:'#WealthMindset #MoneyPsychology #FinancialIntelligence #ThinkLikeTheRich'}
+  ]},
+  {num:'03',title:'Fewer Decisions',category:'Decision Frameworks',slides:[
+    {type:'hook',label:'Hook',category:'Decision Frameworks',postnum:'03 / 10',hook:"Billionaires don't make better decisions. They make fewer ones.",accent:'fewer ones',sub:'Decision fatigue is the hidden tax on every bad call.',brand:'APEX'},
+    {type:'compare',label:'Compare',category:'Decision Architecture',avg:'Makes 200 small decisions daily. Exhausted by evening.',elite:'Systematizes everything routine. Reserves cognitive energy for 2–3 high-leverage calls per day.',bottom:'You can\'t out-decide decision fatigue. Engineer around it.'},
+    {type:'framework',label:'Framework',category:'Decision Reduction System',steps:'Identify recurring decisions — automate or create default rules.\nCreate if-then protocols for common scenarios.\nSchedule your 2 most important decisions before noon.',closing:'"The goal isn\'t better decisions — it\'s needing fewer of them."'},
+    {type:'closing',label:'Closing',closing:'"The goal isn\'t to make better decisions — it\'s to need fewer of them."',brand:'APEX',handle:'@apexmindset'},
+    {type:'caption',label:'Caption',caption:"Steve Jobs wore the same outfit. Buffett eats the same breakfast. This isn't eccentricity — it's cognitive capital management. Every irrelevant choice eliminated is energy reallocated to something that compounds.",tags:'#DecisionFrameworks #CognitiveEdge #EliteHabits #BillionaireMindset'}
+  ]},
+  {num:'04',title:'Network Architecture',category:'Power & Influence',slides:[
+    {type:'hook',label:'Hook',category:'Power & Influence',postnum:'04 / 10',hook:"Networking doesn't scale. Network architecture does.",accent:'Network architecture',sub:'Collecting contacts is a middle-class strategy.',brand:'APEX'},
+    {type:'compare',label:'Compare',category:'Network Strategy',avg:'Attends events, collects cards. Wide but shallow.',elite:'Identifies 5 node people per year. Invests deeply. Access compounds.',bottom:'One node beats a hundred contacts.'},
+    {type:'framework',label:'Framework',category:'Node-Building Protocol',steps:'Map network — who sits at intersections of multiple power circles?\nIdentify 5 nodes needed in the next 12 months.\nProvide value before asking for access.',closing:'"Your network isn\'t who you know — it\'s what ecosystems you reach in two introductions."'},
+    {type:'closing',label:'Closing',closing:'"Your network isn\'t who you know. It\'s what ecosystems you can reach in two introductions."',brand:'APEX',handle:'@apexmindset'},
+    {type:'caption',label:'Caption',caption:"At a certain level of success, skills are assumed. The differentiator becomes access — and access is a function of network architecture, not hustle.",tags:'#PowerNetworking #InfluenceStrategy #EliteAccess #WealthPsychology'}
+  ]},
+  {num:'05',title:'Risk Engineering',category:'Misconceptions',slides:[
+    {type:'hook',label:'Hook',category:'Misconceptions',postnum:'05 / 10',hook:"Billionaires aren't risk-takers. They're risk engineers.",accent:'risk engineers',sub:"What looks like courage from outside is calculated asymmetry from inside.",brand:'APEX'},
+    {type:'compare',label:'Compare',category:'Risk Psychology',avg:'Takes bold risks. Celebrates "big bets." Outcome = luck.',elite:'Structures deals so failure is survivable. Maximizes upside while capping downside.',bottom:'"Courage without asymmetry is just gambling with better PR."'},
+    {type:'framework',label:'Framework',category:'The Asymmetry Filter',steps:"Q1: What's the worst outcome — is it survivable?\nQ2: What's the realistic upside vs. downside ratio?\nQ3: What is the base rate of this class of bet?\nQ4: What does doing nothing cost over time?",closing:'"Courage without asymmetry is just gambling with better PR."'},
+    {type:'closing',label:'Closing',closing:'"Courage without asymmetry is just gambling with better PR."',brand:'APEX',handle:'@apexmindset'},
+    {type:'caption',label:'Caption',caption:"Stop admiring the risk. Understand the structure beneath it. Every 'big bet' you've read about was hedged in ways the article never mentioned.",tags:'#RiskPsychology #WealthStrategy #BillionaireThinking #AsymmetricBets'}
+  ]},
+  {num:'06',title:'Perception as Asset',category:'Status & Perception',slides:[
+    {type:'hook',label:'Hook',category:'Status & Perception',postnum:'06 / 10',hook:'Perception is the first asset every powerful person deliberately manages.',accent:'deliberately manages',sub:'Before capital, before strategy — positioning precedes opportunity.',brand:'APEX'},
+    {type:'compare',label:'Compare',category:'Perception Strategy',avg:'Manages reputation reactively — damage control after incidents.',elite:'Builds a perception narrative from day one. Controls the frame before entering the room.',bottom:'You don\'t control what people think. You control every input they use to form that thought.'},
+    {type:'framework',label:'Framework',category:'Perception Architecture',steps:"Define the single adjective you want associated with your name in rooms you're not in.\nAudit every touchpoint — digital presence, communication style, associations.\nCraft a consistent body of proof. Perception needs evidence — not assertion.",closing:'"Positioning isn\'t manipulation. It\'s communication architecture."'},
+    {type:'closing',label:'Closing',closing:'"You don\'t control what people think of you. But you control every input they use to form that thought."',brand:'APEX',handle:'@apexmindset'},
+    {type:'caption',label:'Caption',caption:"If you're not shaping the narrative around your name, someone else is — and they're doing it with incomplete information.",tags:'#PerceptionControl #StatusStrategy #PowerMoves #ElitePositioning'}
+  ]},
+  {num:'07',title:'Hard Work Bottleneck',category:'Systems vs Work',slides:[
+    {type:'hook',label:'Hook',category:'Systems vs Work',postnum:'07 / 10',hook:'Hard work is a bottleneck dressed up as a virtue.',accent:'bottleneck',sub:'The hardest worker in any building is almost never the highest earner.',brand:'APEX'},
+    {type:'compare',label:'Compare',category:'Effort vs Systems',avg:'Works 60-hour weeks. Income tied to hours. Proud of the grind.',elite:'Works to build systems that work without them. Income tied to outcomes, not presence.',bottom:'"More effort in the wrong place is just a faster route to the same ceiling."'},
+    {type:'framework',label:'Framework',category:'The Systemization Test',steps:"Test: If you stopped working 90 days, what happens to your income?\nBuild: Find the 20% that generates 80% of value. Systematize it.\nRemove: Everything else is delegatable, automatable, or eliminable.",closing:'"The goal of work is to make yourself unnecessary — not indispensable."'},
+    {type:'closing',label:'Closing',closing:'"The goal of work is to make yourself unnecessary — not indispensable."',brand:'APEX',handle:'@apexmindset'},
+    {type:'caption',label:'Caption',caption:"The hustle industry profits from keeping you productive inside a box. Systems thinking is about redesigning the box. One isn't harder — one is just a completely different game.",tags:'#SystemsThinking #WealthArchitecture #BeyondHustle #EliteStrategy'}
+  ]},
+  {num:'08',title:'Capital Allocation',category:'Wealth Psychology',slides:[
+    {type:'hook',label:'Hook',category:'Wealth Psychology',postnum:'08 / 10',hook:'The middle class saves money. The wealthy allocate capital.',accent:'allocate capital',sub:"They're not the same behavior. One protects. One deploys.",brand:'APEX'},
+    {type:'compare',label:'Compare',category:'Saving vs Allocating',avg:'"I saved $10K." Metric: balance. Risk = bad.',elite:'"I deployed $10K across 3 positions." Metric: return on capital. Idle capital = loss.',bottom:'"Capital without a thesis isn\'t saved — it\'s slowly surrendered."'},
+    {type:'framework',label:'Framework',category:'Capital Stack Thinking',steps:"Tier 1: Liquidity reserve — 3–6 months expenses. Operational, not investment capital.\nTier 2: Protection capital — insurance, legal structure, tax-efficient wrappers.\nTier 3: Productive capital — deployed in equity, assets, business, real estate.",closing:'"Capital without a thesis isn\'t saved — it\'s slowly surrendered."'},
+    {type:'closing',label:'Closing',closing:'"Capital without a thesis isn\'t saved — it\'s slowly surrendered."',brand:'APEX',handle:'@apexmindset'},
+    {type:'caption',label:'Caption',caption:"The question is never 'do I have enough?' It's 'where does this work hardest?' Beyond your liquidity reserve, every idle dollar is bleeding.",tags:'#CapitalAllocation #WealthPsychology #MoneyMindset #InvestmentThinking'}
+  ]},
+  {num:'09',title:'Strategic Silence',category:'Power & Influence',slides:[
+    {type:'hook',label:'Hook',category:'Power & Influence',postnum:'09 / 10',hook:'The most powerful people in any room are rarely the ones speaking.',accent:'rarely the ones speaking',sub:'Information asymmetry is a primary source of power. Talking breaks it.',brand:'APEX'},
+    {type:'compare',label:'Compare',category:'Communication Power',avg:'Talks to seem knowledgeable. Fills silences. Reveals position early.',elite:'Asks one well-placed question. Listens completely. Responds with precision.',bottom:'"Silence in the right moment is the most expensive real estate in any conversation."'},
+    {type:'framework',label:'Framework',category:'Strategic Silence Protocol',steps:"Enter any high-stakes conversation with one prepared question — not a speech.\nAfter the question: stop talking. Let silence do the pressure work.\nRespond only to substance — not emotional charge. Precision over volume.",closing:'"Whoever is more comfortable with silence controls the negotiation."'},
+    {type:'closing',label:'Closing',closing:'"Whoever is more comfortable with silence controls the negotiation."',brand:'APEX',handle:'@apexmindset'},
+    {type:'caption',label:'Caption',caption:"The urge to fill silence is anxiety, not confidence. Train yourself to sit in it. The other person will almost always fill it — and hand you the advantage.",tags:'#PowerDynamics #InfluenceStrategy #EliteBehavior #NegotiationPsychology'}
+  ]},
+  {num:'10',title:'Build the Moat',category:'Systems / Silent Moves',slides:[
+    {type:'hook',label:'Hook',category:'Silent Moves',postnum:'10 / 10',hook:"The wealthy don't build empires. They build moats.",accent:'build moats',sub:'Then let the empire fill itself in.',brand:'APEX'},
+    {type:'compare',label:'Compare',category:'Moat vs Grind',avg:'Competes on effort and skill. Replicable. Race to the bottom.',elite:'Builds structural advantages. Position defends itself. Competitors face costs you don\'t.',bottom:'"Grinding is the absence of a moat."'},
+    {type:'framework',label:'Framework',category:'The 5 Moat Types',steps:"Network effects — your value grows as more people know or use you.\nSwitching costs — make it expensive to replace you.\nProprietary insight — knowledge nobody else has access to.\nDistribution control — access to audiences others can't reach.",closing:'"Stop building a career. Build a position that defends itself while you sleep."'},
+    {type:'closing',label:'Closing',closing:'"Stop building a career. Build a position that defends itself while you sleep."',brand:'APEX',handle:'@apexmindset'},
+    {type:'caption',label:'Caption',caption:"Every hour you spend grinding without building a moat is an hour that doesn't compound. Ask: what am I building right now that makes competing with me structurally harder next year?",tags:'#CompetitiveAdvantage #WealthArchitecture #EliteThinking #PowerMoves'}
+  ]}
+];
+
+// ════════════════════════════════════════════
+//  SLIDES STATE — start with preset 01
+// ════════════════════════════════════════════
+let slides = PRESETS[0].slides.map(s => ({...s}));
+
+// ════════════════════════════════════════════
+//  UNDO
+// ════════════════════════════════════════════
+function pushUndo() {
+  undoStack.push(JSON.stringify({slides, currentSlideIndex}));
+  if (undoStack.length > 40) undoStack.shift();
+}
+function undo() {
+  if (!undoStack.length) { showToast('Nothing to undo'); return; }
+  const s = JSON.parse(undoStack.pop());
+  slides = s.slides; currentSlideIndex = s.currentSlideIndex;
+  refreshAll();
+  document.getElementById('ig-post').classList.add('undo-flash');
+  setTimeout(() => document.getElementById('ig-post').classList.remove('undo-flash'), 300);
+  showToast('↩ Undone');
+}
+
+// ════════════════════════════════════════════
+//  TABS
+// ════════════════════════════════════════════
+function switchTab(name, btn) {
+  ['content','style','presets','export'].forEach(t => {
+    const el = document.getElementById('tab-'+t);
+    if (el) el.style.display = t === name ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+// ════════════════════════════════════════════
+//  SIDEBAR EDITOR
+// ════════════════════════════════════════════
+function renderSidebar() {
+  const editor = document.getElementById('dynamic-editor');
+  const d = slides[currentSlideIndex];
+  const t = d.type;
+  let h = `<div class="s-title">Editing: ${d.label} Slide</div>`;
+
+  const inp = (key, lbl, isTA) => {
+    const v = ((d[key]||'')).toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+    if (isTA) return `<div class="fg"><label>${lbl}</label><textarea oninput="sd('${key}',this.value)">${(d[key]||'')}</textarea></div>`;
+    return `<div class="fg"><label>${lbl}</label><input type="text" value="${v}" oninput="sd('${key}',this.value)"></div>`;
+  };
+
+  if (t==='hook'){h+=inp('category','Category');h+=inp('postnum','Post Number');h+=inp('hook','Hook Text',1);h+=inp('accent','Accent Words to Highlight');h+=inp('sub','Sub Text',1);h+=inp('brand','Brand Name');}
+  else if(t==='compare'){h+=inp('category','Title');h+=inp('avg','Average Column',1);h+=inp('elite','Elite Column',1);h+=inp('bottom','Bottom Quote',1);}
+  else if(t==='framework'){h+=inp('category','Heading');h+=inp('steps','Steps (one per line)',1);h+=inp('closing','Closing Line',1);}
+  else if(t==='list'){h+=inp('eyebrow','Eyebrow');h+=inp('title','Title');h+=inp('items','Items (one per line)',1);}
+  else if(t==='stats'){h+=inp('eyebrow','Eyebrow');h+=inp('headline','Headline');h+=inp('stat1num','Stat 1 Number');h+=inp('stat1label','Stat 1 Label',1);h+=inp('stat2num','Stat 2 Number');h+=inp('stat2label','Stat 2 Label',1);h+=inp('stat3num','Stat 3 Number');h+=inp('stat3label','Stat 3 Label',1);h+=inp('stat4num','Stat 4 Number');h+=inp('stat4label','Stat 4 Label',1);h+=inp('note','Bottom Note');}
+  else if(t==='quote'){h+=inp('quote','The Quote',1);h+=inp('author','Author');}
+  else if(t==='media'){h+=`<div class="fg"><label>Upload Image</label><input type="file" accept="image/*" onchange="handleImageUpload(this)"></div>`;h+=inp('eyebrow','Eyebrow');h+=inp('title','Title');h+=inp('text','Description',1);}
+  else if(t==='divider'){h+=inp('num','Number Label');h+=inp('label2','Small Label');h+=inp('title','Main Title');}
+  else if(t==='closing'){h+=inp('closing','Main Quote',1);h+=inp('brand','Brand');h+=inp('handle','Handle');}
+  else if(t==='caption'){h+=inp('caption','Caption',1);h+=inp('tags','Hashtags (space separated)');h+=`<button class="copy-cap-btn" onclick="copyCaption()">⎘ Copy Caption + Tags</button>`;}
+
+  editor.innerHTML = h;
+}
+
+function sd(key, val) { pushUndo(); slides[currentSlideIndex][key] = val; updatePost(); }
+
+function handleImageUpload(input) {
+  if (input.files && input.files[0]) {
+    const r = new FileReader();
+    r.onload = e => { pushUndo(); slides[currentSlideIndex].imageSrc = e.target.result; updatePost(); };
+    r.readAsDataURL(input.files[0]);
+  }
+}
+
+function copyCaption() {
+  const d = slides[currentSlideIndex];
+  const text = (d.caption||'') + '\n.\n.\n.\n' + (d.tags||'');
+  navigator.clipboard.writeText(text).then(() => showToast('Caption copied!')).catch(() => showToast('Copy failed'));
+}
+
+// ════════════════════════════════════════════
+//  SLIDE ACTIONS
+// ════════════════════════════════════════════
+function addSlide() {
+  pushUndo();
+  const type = document.getElementById('new-slide-type').value;
+  slides.splice(currentSlideIndex + 1, 0, {...DEFAULTS[type]});
+  currentSlideIndex++;
+  refreshAll();
+  showToast(`Added ${type} slide`);
+}
+function deleteSlide() {
+  if (slides.length <= 1) { showToast('Need at least 1 slide!'); return; }
+  pushUndo();
+  slides.splice(currentSlideIndex, 1);
+  if (currentSlideIndex >= slides.length) currentSlideIndex = slides.length - 1;
+  refreshAll(); showToast('Slide deleted');
+}
+function duplicateSlide() {
+  pushUndo();
+  slides.splice(currentSlideIndex + 1, 0, JSON.parse(JSON.stringify(slides[currentSlideIndex])));
+  currentSlideIndex++;
+  refreshAll(); showToast('Duplicated');
+}
+function resetSlide() {
+  pushUndo();
+  const type = slides[currentSlideIndex].type;
+  slides[currentSlideIndex] = {...DEFAULTS[type]};
+  refreshAll(); showToast('Slide reset');
+}
+function moveSlideLeft() {
+  if (!currentSlideIndex) return;
+  pushUndo();
+  [slides[currentSlideIndex], slides[currentSlideIndex-1]] = [slides[currentSlideIndex-1], slides[currentSlideIndex]];
+  currentSlideIndex--; refreshAll();
+}
+function moveSlideRight() {
+  if (currentSlideIndex === slides.length-1) return;
+  pushUndo();
+  [slides[currentSlideIndex], slides[currentSlideIndex+1]] = [slides[currentSlideIndex+1], slides[currentSlideIndex]];
+  currentSlideIndex++; refreshAll();
+}
+function goToSlide(i) { currentSlideIndex = Math.max(0, Math.min(slides.length-1, i)); refreshAll(); }
+function prevSlide() { goToSlide(currentSlideIndex-1); }
+function nextSlide() { goToSlide(currentSlideIndex+1); }
+function refreshAll() { renderSidebar(); updatePost(); }
+
+// ════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════
+function esc(s) { return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function hlAcc(text, phrase) {
+  if (!phrase||!phrase.trim()) return esc(text);
+  const ep = esc(phrase), et = esc(text);
+  return et.replace(ep, `<span class="accent">${ep}</span>`);
+}
+
+function getBgOverlay() {
+  if (currentBgStyle === 'solid') return '';
+  if (currentBgStyle === 'gradient') {
+    const dark = ['dark-gold','obsidian','slate','midnight'].includes(currentTemplate);
+    const c = dark ? 'rgba(201,168,76,0.055)' : 'rgba(160,120,48,0.07)';
+    return `<div class="bg-overlay" style="background:linear-gradient(140deg,transparent 0%,${c} 100%)"></div>`;
+  }
+  if (currentBgStyle === 'noise') {
+    return `<div class="bg-overlay" style="background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.9'/%3E%3C/svg%3E\");opacity:0.045"></div>`;
+  }
+  if (currentBgStyle === 'geo') {
+    const c = currentAccent;
+    return `<div class="bg-overlay" style="background-image:repeating-linear-gradient(45deg,${c}09 0px,${c}09 1px,transparent 0,transparent 50%);background-size:22px 22px"></div>`;
+  }
+  return '';
+}
+
+function renderSlideHTML(d, idx) {
+  const bgo = getBgOverlay();
+  const total = slides.length;
+  const t = d.type;
+
+  if (t==='hook') return `${bgo}<div class="slide-hook"><div class="hook-top"><span class="category-badge">${esc(d.category)}</span><span class="post-num">${esc(d.postnum)}</span></div><div class="hook-mid"><div class="hook-line" style="font-size:${hookFontSize}px">${hlAcc(d.hook,d.accent)}</div><div class="hook-rule rule-line"></div><div class="hook-sub">${esc(d.sub)}</div></div><div class="hook-bot"><span class="hook-brand">${esc(d.brand)}</span><span class="hook-ind">${(idx||0)+1} / ${total}</span></div></div>`;
+
+  if (t==='compare') return `${bgo}<div class="slide-compare"><div class="cmp-header"><div class="cmp-label">Average vs Elite Thinking</div><div class="cmp-title">${esc(d.category)}</div></div><div class="cmp-cols"><div class="col-avg"><div class="col-label">Average</div><div class="col-text">${esc(d.avg)}</div></div><div class="col-elite"><div class="col-label">Elite</div><div class="col-text">${esc(d.elite)}</div></div></div><div class="cmp-bottom">${esc(d.bottom)}</div></div>`;
+
+  if (t==='framework') {
+    const steps=(d.steps||'').split('\n').filter(s=>s.trim());
+    return `${bgo}<div class="slide-framework"><div class="fw-title">↳ Framework</div><div class="fw-heading">${esc(d.category)}</div><div class="fw-steps">${steps.map((s,i)=>`<div class="fw-step"><span class="step-num">0${i+1}</span><span class="step-text">${esc(s)}</span></div>`).join('')}</div><div class="fw-closing">${esc(d.closing)}</div></div>`;
+  }
+
+  if (t==='list') {
+    const items=(d.items||'').split('\n').filter(s=>s.trim());
+    return `${bgo}<div class="slide-list"><div class="list-eyebrow">↳ ${esc(d.eyebrow)}</div><div class="list-header">${esc(d.title)}</div><div class="list-items">${items.map((s,i)=>`<div class="list-item"><div class="list-num">0${i+1}</div><div class="list-text">${esc(s)}</div></div>`).join('')}</div></div>`;
+  }
+
+  if (t==='stats') return `${bgo}<div class="slide-stats"><div class="stats-eyebrow">↳ ${esc(d.eyebrow)}</div><div class="stats-headline">${esc(d.headline)}</div><div class="stats-grid"><div class="stat-block"><div class="stat-num">${esc(d.stat1num)}</div><div class="stat-label">${esc(d.stat1label)}</div></div><div class="stat-block"><div class="stat-num">${esc(d.stat2num)}</div><div class="stat-label">${esc(d.stat2label)}</div></div><div class="stat-block"><div class="stat-num">${esc(d.stat3num)}</div><div class="stat-label">${esc(d.stat3label)}</div></div><div class="stat-block"><div class="stat-num">${esc(d.stat4num)}</div><div class="stat-label">${esc(d.stat4label)}</div></div></div><div class="stats-note">${esc(d.note)}</div></div>`;
+
+  if (t==='quote') return `${bgo}<div class="slide-quote"><div class="quote-mark accent">"</div><div class="quote-text">${esc(d.quote)}</div><div class="quote-author">— ${esc(d.author)}</div></div>`;
+
+  if (t==='media') {
+    const img = d.imageSrc ? `<img src="${d.imageSrc}" alt="media">` : `<div class="media-placeholder">[ UPLOAD IMAGE ]</div>`;
+    return `${bgo}<div class="slide-media"><div class="media-top">${img}</div><div class="media-bottom"><div class="media-eyebrow">↳ ${esc(d.eyebrow)}</div><div class="media-title">${esc(d.title)}</div><div class="media-desc">${esc(d.text)}</div></div></div>`;
+  }
+
+  if (t==='divider') return `${bgo}<div class="slide-divider"><div class="div-rule-v"></div><div class="div-num-label">${esc(d.num)}</div><div class="div-label-text">${esc(d.label2)}</div><div class="div-title">${esc(d.title)}</div><div class="div-rule-v2"></div></div>`;
+
+  if (t==='closing') return `${bgo}<div class="slide-closing"><div class="cl-rule"></div><div class="closing-main">${esc(d.closing)}</div><div class="cl-rule2"></div><div class="closing-brand">${esc(d.brand)}</div><div class="closing-handle">${esc(d.handle)}</div></div>`;
+
+  if (t==='caption') {
+    const tags=(d.tags||'').split(' ').filter(t=>t.trim());
+    return `${bgo}<div class="slide-caption"><div class="cap-eyebrow">↳ Caption &amp; Hashtags</div><div class="cap-text">${esc(d.caption)}</div><div class="cap-tags">${tags.map(t=>`<span class="cap-tag">${esc(t)}</span>`).join('')}</div></div>`;
+  }
+  return '';
+}
+
+function updatePost() {
+  const post = document.getElementById('ig-post');
+  post.innerHTML = renderSlideHTML(slides[currentSlideIndex], currentSlideIndex);
+  post.style.setProperty('--gold', currentAccent);
+  document.getElementById('slide-counter').textContent = `${currentSlideIndex+1} / ${slides.length}`;
+  updateDots(); updateStrip();
+}
+
+function updateStyle() {
+  hookFontSize = document.getElementById('rng-hooksize').value;
+  document.getElementById('hook-size-val').textContent = hookFontSize;
+  updatePost();
+}
+
+// ════════════════════════════════════════════
+//  UI HELPERS
+// ════════════════════════════════════════════
+function updateDots() {
+  document.getElementById('slide-dots').innerHTML = slides.map((s,i) =>
+    `<div class="dot${i===currentSlideIndex?' active':''}" onclick="goToSlide(${i})" title="${s.label}"></div>`
+  ).join('');
+}
+
+function updateStrip() {
+  const bg = TPL_BG[currentTemplate] || '#0a0a0a';
+  document.getElementById('post-strip').innerHTML = slides.map((s,i) =>
+    `<div class="strip-thumb${i===currentSlideIndex?' active':''}" onclick="goToSlide(${i})">
+      <div class="strip-bg" style="background:${bg}"></div>
+      <div class="strip-label">${s.label}</div>
+      <div class="strip-badge">${i+1}</div>
+    </div>`
+  ).join('');
+}
+
+function setTemplate(tpl, btn) {
+  currentTemplate = tpl;
+  document.getElementById('ig-post').setAttribute('data-template', tpl);
+  document.querySelectorAll('.tpl-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  currentAccent = TPL_ACCENTS[tpl] || '#c9a84c';
+  document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('active', s.dataset.color === currentAccent));
+  updatePost(); updateStrip();
+}
+
+function setAccent(sw) {
+  currentAccent = sw.dataset.color;
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+  sw.classList.add('active');
+  updatePost();
+}
+
+function setBgStyle(style, btn) {
+  currentBgStyle = style;
+  document.querySelectorAll('.bg-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  updatePost();
+}
+
+function setFontPair(pair, btn) {
+  currentFontPair = pair;
+  const post = document.getElementById('ig-post');
+  post.className = post.className.replace(/font-\w+/g,'').trim() + ' font-' + pair;
+  document.querySelectorAll('[id^=fp-]').forEach(b => b.classList.remove('active'));
+  document.getElementById('fp-'+pair)?.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function setAR(ratio, btn) {
+  currentAR = ratio;
+  const post = document.getElementById('ig-post');
+  post.className = post.className.replace(/ar-\w+/g,'').trim() + ' ar-' + ratio;
+  document.querySelectorAll('.ar-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const labels = {square:'480×480 → 1080×1080',portrait:'384×480 → 864×1080',story:'270×480 → 607×1080'};
+  document.getElementById('preview-label').textContent = `Live Preview · ${labels[ratio]}`;
+}
+
+// ════════════════════════════════════════════
+//  PRESETS
+// ════════════════════════════════════════════
+function buildPresetGrid() {
+  document.getElementById('preset-grid').innerHTML = PRESETS.map(p =>
+    `<button class="preset-btn" onclick="loadPreset('${p.num}')">
+      <span class="preset-num">POST ${p.num}</span>
+      ${p.title}<br>
+      <span style="opacity:.5;font-size:.44rem">${p.category}</span>
+    </button>`
+  ).join('');
+}
+
+function loadPreset(num) {
+  pushUndo();
+  const p = PRESETS.find(x => x.num === num);
+  if (!p) return;
+  slides = p.slides.map(s => ({...s}));
+  currentSlideIndex = 0;
+  refreshAll();
+  showToast(`Loaded Post ${num}: ${p.title}`);
+  switchTab('content', document.querySelector('.tab'));
+}
+
+// ════════════════════════════════════════════
+//  DOWNLOAD
+// ════════════════════════════════════════════
+function showLoading(){ document.getElementById('loading').classList.add('active'); }
+function hideLoading(){ document.getElementById('loading').classList.remove('active'); }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+async function renderToCanvas(idx) {
+  const post = document.getElementById('ig-post');
+  const saved = post.innerHTML;
+  post.innerHTML = renderSlideHTML(slides[idx], idx);
+  post.style.setProperty('--gold', currentAccent);
+  await new Promise(r => setTimeout(r, 100));
+  const canvas = await html2canvas(post, {
+    scale: 2.25, useCORS: true, allowTaint: true,
+    backgroundColor: null, width: post.offsetWidth,
+    height: post.offsetHeight, logging: false, imageTimeout: 0
+  });
+  post.innerHTML = saved;
+  post.style.setProperty('--gold', currentAccent);
+  return canvas;
+}
+
+async function downloadCurrentSlide() {
+  showLoading();
+  try {
+    const canvas = await renderToCanvas(currentSlideIndex);
+    const a = document.createElement('a');
+    a.download = `apex-post-${currentSlideIndex+1}-${slides[currentSlideIndex].type}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    showToast('↓ Slide downloaded!');
+  } catch(e) { showToast('Error: '+e.message); }
+  hideLoading();
+}
+
+async function downloadAllSlides() {
+  showLoading();
+  try {
+    for (let i = 0; i < slides.length; i++) {
+      const canvas = await renderToCanvas(i);
+      const a = document.createElement('a');
+      a.download = `apex-slide-${i+1}-${slides[i].type}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+      await new Promise(r => setTimeout(r, 350));
+    }
+    showToast(`↓ All ${slides.length} slides downloaded!`);
+  } catch(e) { showToast('Error: '+e.message); }
+  hideLoading();
+}
+
+// ════════════════════════════════════════════
+//  APP THEME
+// ════════════════════════════════════════════
+function toggleAppTheme() {
+  appTheme = appTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', appTheme);
+  document.getElementById('theme-icon').textContent = appTheme === 'dark' ? '☀' : '☾';
+  document.getElementById('theme-label').textContent = appTheme === 'dark' ? 'Light' : 'Dark';
+}
+
+// ════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  const inp = ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName);
+  if (!inp) {
+    if (e.key==='ArrowLeft') { prevSlide(); e.preventDefault(); }
+    if (e.key==='ArrowRight') { nextSlide(); e.preventDefault(); }
+    const tpls = ['dark-gold','light-warm','obsidian','ivory','slate','midnight','sand'];
+    if (e.key>='1' && e.key<='7') setTemplate(tpls[+e.key-1], null);
+  }
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key==='z') { undo(); e.preventDefault(); }
+    if (e.key==='d') { duplicateSlide(); e.preventDefault(); }
+    if (e.key==='s') { downloadCurrentSlide(); e.preventDefault(); }
+    if (e.key==='n') { addSlide(); e.preventDefault(); }
+  }
+});
+
+// INIT
+buildPresetGrid();
+refreshAll();
+</script>
+</body>
+</html>
