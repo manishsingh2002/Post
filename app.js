@@ -1490,54 +1490,21 @@ async function downloadCurrentSlide() {
   hideLoading();
 }
 
-// async function downloadAllSlides() {
-//   if (typeof JSZip === 'undefined') {
-//     showToast('ZIP library loading, please retry...', true);
-//     return;
-//   }
-//   showLoading(`Preparing ${slides.length} cards...`);
-//   const zip = new JSZip();
-//   const folder = zip.folder('apex-cards');
-//   const fmt = FORMAT_CONFIG[currentFormat];
-//   try {
-//     for (let i = 0; i < slides.length; i++) {
-//       document.getElementById('loading-text').textContent = `Rendering ${i + 1} / ${slides.length}...`;
-//       const canvas = await renderToCanvas(i);
-//       const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-//       folder.file(`card-${i + 1}-${slides[i].type}-${currentFormat}.png`, blob);
-//       await new Promise(r => setTimeout(r, 80));
-//     }
-//     document.getElementById('loading-text').textContent = 'Creating ZIP...';
-//     const content = await zip.generateAsync({ type: 'blob' });
-//     const link = document.createElement('a');
-//     link.href = URL.createObjectURL(content);
-//     link.download = `apex-${slides.length}cards-${currentFormat}-${fmt.w}x${fmt.h}.zip`;
-//     link.click();
-//     showToast(`✓ ${slides.length} cards saved as ZIP!`);
-//   } catch (e) {
-//     showToast('Export failed: ' + e.message, true);
-//     console.error(e);
-//   }
-//   hideLoading();
-// }
 async function downloadAllSlides() {
   if (typeof JSZip === 'undefined') {
     showToast('ZIP library loading, please retry...', true);
     return;
   }
   showLoading(`Preparing ${slides.length} cards...`);
-  const zip = new JSZip(); // Create ZIP
+  const zip = new JSZip();
+  const folder = zip.folder('apex-cards');
   const fmt = FORMAT_CONFIG[currentFormat];
-  
   try {
     for (let i = 0; i < slides.length; i++) {
       document.getElementById('loading-text').textContent = `Rendering ${i + 1} / ${slides.length}...`;
       const canvas = await renderToCanvas(i);
       const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-      
-      // Add file directly to the root of the ZIP instead of a subfolder
-      zip.file(`card-${i + 1}-${slides[i].type}-${currentFormat}.png`, blob);
-      
+      folder.file(`card-${i + 1}-${slides[i].type}-${currentFormat}.png`, blob);
       await new Promise(r => setTimeout(r, 80));
     }
     document.getElementById('loading-text').textContent = 'Creating ZIP...';
@@ -1546,13 +1513,46 @@ async function downloadAllSlides() {
     link.href = URL.createObjectURL(content);
     link.download = `apex-${slides.length}cards-${currentFormat}-${fmt.w}x${fmt.h}.zip`;
     link.click();
-    showToast(`✓ ${slides.length} cards saved as flat ZIP!`);
+    showToast(`✓ ${slides.length} cards saved as ZIP!`);
   } catch (e) {
     showToast('Export failed: ' + e.message, true);
     console.error(e);
   }
   hideLoading();
 }
+// async function downloadAllSlides() {
+//   if (typeof JSZip === 'undefined') {
+//     showToast('ZIP library loading, please retry...', true);
+//     return;
+//   }
+//   showLoading(`Preparing ${slides.length} cards...`);
+//   const zip = new JSZip(); // Create ZIP
+//   const fmt = FORMAT_CONFIG[currentFormat];
+  
+//   try {
+//     for (let i = 0; i < slides.length; i++) {
+//       document.getElementById('loading-text').textContent = `Rendering ${i + 1} / ${slides.length}...`;
+//       const canvas = await renderToCanvas(i);
+//       const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      
+//       // Add file directly to the root of the ZIP instead of a subfolder
+//       zip.file(`card-${i + 1}-${slides[i].type}-${currentFormat}.png`, blob);
+      
+//       await new Promise(r => setTimeout(r, 80));
+//     }
+//     document.getElementById('loading-text').textContent = 'Creating ZIP...';
+//     const content = await zip.generateAsync({ type: 'blob' });
+//     const link = document.createElement('a');
+//     link.href = URL.createObjectURL(content);
+//     link.download = `apex-${slides.length}cards-${currentFormat}-${fmt.w}x${fmt.h}.zip`;
+//     link.click();
+//     showToast(`✓ ${slides.length} cards saved as flat ZIP!`);
+//   } catch (e) {
+//     showToast('Export failed: ' + e.message, true);
+//     console.error(e);
+//   }
+//   hideLoading();
+// }
 // async function downloadAllSlides() {
 //   showLoading(`Downloading ${slides.length} cards...`);
 //   const fmt = FORMAT_CONFIG[currentFormat];
