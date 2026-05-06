@@ -1520,64 +1520,64 @@ async function downloadCurrentSlide() {
 //   }
 //   hideLoading();
 // }
-// async function downloadAllSlides() {
-//   if (typeof JSZip === 'undefined') {
-//     showToast('ZIP library loading, please retry...', true);
-//     return;
-//   }
-//   showLoading(`Preparing ${slides.length} cards...`);
-//   const zip = new JSZip(); // Create ZIP
-//   const fmt = FORMAT_CONFIG[currentFormat];
-  
-//   try {
-//     for (let i = 0; i < slides.length; i++) {
-//       document.getElementById('loading-text').textContent = `Rendering ${i + 1} / ${slides.length}...`;
-//       const canvas = await renderToCanvas(i);
-//       const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-      
-//       // Add file directly to the root of the ZIP instead of a subfolder
-//       zip.file(`card-${i + 1}-${slides[i].type}-${currentFormat}.png`, blob);
-      
-//       await new Promise(r => setTimeout(r, 80));
-//     }
-//     document.getElementById('loading-text').textContent = 'Creating ZIP...';
-//     const content = await zip.generateAsync({ type: 'blob' });
-//     const link = document.createElement('a');
-//     link.href = URL.createObjectURL(content);
-//     link.download = `apex-${slides.length}cards-${currentFormat}-${fmt.w}x${fmt.h}.zip`;
-//     link.click();
-//     showToast(`✓ ${slides.length} cards saved as flat ZIP!`);
-//   } catch (e) {
-//     showToast('Export failed: ' + e.message, true);
-//     console.error(e);
-//   }
-//   hideLoading();
-// }
 async function downloadAllSlides() {
-  showLoading(`Downloading ${slides.length} cards...`);
+  if (typeof JSZip === 'undefined') {
+    showToast('ZIP library loading, please retry...', true);
+    return;
+  }
+  showLoading(`Preparing ${slides.length} cards...`);
+  const zip = new JSZip(); // Create ZIP
   const fmt = FORMAT_CONFIG[currentFormat];
   
   try {
     for (let i = 0; i < slides.length; i++) {
       document.getElementById('loading-text').textContent = `Rendering ${i + 1} / ${slides.length}...`;
       const canvas = await renderToCanvas(i);
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
       
-      // Create a temporary link and trigger the download instantly
-      const link = document.createElement('a');
-      link.download = `apex-card-${i + 1}-${slides[i].type}-${currentFormat}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      // Add file directly to the root of the ZIP instead of a subfolder
+      zip.file(`card-${i + 1}-${slides[i].type}-${currentFormat}.png`, blob);
       
-      // A slight delay is crucial here so the browser doesn't crash from rapid link clicks
-      await new Promise(r => setTimeout(r, 300)); 
+      await new Promise(r => setTimeout(r, 80));
     }
-    showToast(`✓ Triggered ${slides.length} direct downloads!`);
+    document.getElementById('loading-text').textContent = 'Creating ZIP...';
+    const content = await zip.generateAsync({ type: 'blob' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(content);
+    link.download = `apex-${slides.length}cards-${currentFormat}-${fmt.w}x${fmt.h}.zip`;
+    link.click();
+    showToast(`✓ ${slides.length} cards saved as flat ZIP!`);
   } catch (e) {
     showToast('Export failed: ' + e.message, true);
     console.error(e);
   }
   hideLoading();
 }
+// async function downloadAllSlides() {
+//   showLoading(`Downloading ${slides.length} cards...`);
+//   const fmt = FORMAT_CONFIG[currentFormat];
+  
+//   try {
+//     for (let i = 0; i < slides.length; i++) {
+//       document.getElementById('loading-text').textContent = `Rendering ${i + 1} / ${slides.length}...`;
+//       const canvas = await renderToCanvas(i);
+      
+//       // Create a temporary link and trigger the download instantly
+//       const link = document.createElement('a');
+//       link.download = `apex-card-${i + 1}-${slides[i].type}-${currentFormat}.png`;
+//       link.href = canvas.toDataURL('image/png');
+//       link.click();
+      
+//       // A slight delay is crucial here so the browser doesn't crash from rapid link clicks
+//       await new Promise(r => setTimeout(r, 300)); 
+//     }
+//     showToast(`✓ Triggered ${slides.length} direct downloads!`);
+//   } catch (e) {
+//     showToast('Export failed: ' + e.message, true);
+//     console.error(e);
+//   }
+//   hideLoading();
+// }
 // ════════════════════════════════════════════════
 //  KEYBOARD SHORTCUTS
 // ════════════════════════════════════════════════
